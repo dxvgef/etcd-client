@@ -16,4 +16,3 @@ type Key struct {
 	// key的生存时间(秒)
 	TTL int64
 }
-
