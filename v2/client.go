@@ -74,6 +74,7 @@ func New(config *Config) (*Client, error) {
 	return &client, nil
 }
 
+// 创建k/v，如果key已存在会报错
 func (receiver *Client) Create(key, value string) error {
 	_, err := receiver.EtcdAPI.Create(context.Background(), key, value)
 	return err
@@ -84,6 +85,7 @@ func (receiver *Client) CreateInOrder(dir, value string, ttl time.Duration) erro
 	return err
 }
 
+// 设置key的value，如果key不存在则自动创建，否则会重新赋值
 func (receiver *Client) Set(key, value string, ttl time.Duration) error {
 	_, err := receiver.EtcdAPI.Set(context.Background(), key, value, &etcd.SetOptions{
 		TTL:              ttl,
@@ -93,6 +95,16 @@ func (receiver *Client) Set(key, value string, ttl time.Duration) error {
 	return err
 }
 
+// 设置目录，如果目录不存在则自动创建
+func (receiver *Client) SetDir(key string, ttl time.Duration) error {
+	_, err := receiver.EtcdAPI.Set(context.Background(), key, "", &etcd.SetOptions{
+		TTL: ttl,
+		Dir: true,
+	})
+	return err
+}
+
+// 获得某个key的信息
 func (receiver *Client) Get(key string) (*Key, error) {
 	resp, err := receiver.EtcdAPI.Get(context.Background(), key, nil)
 	if err != nil {
@@ -109,12 +121,20 @@ func (receiver *Client) Get(key string) (*Key, error) {
 	}, nil
 }
 
+// 更新某个key的value，如果key不存在则报错
 func (receiver *Client) Update(key, value string) error {
 	_, err := receiver.EtcdAPI.Update(context.Background(), key, value)
 	return err
 }
 
-func (receiver *Client) Delete(key, dir bool) error {
+// 删除某个key
+func (receiver *Client) Delete(key string) error {
 	_, err := receiver.EtcdAPI.Delete(context.Background(), key, &etcd.DeleteOptions{Dir: false})
+	return err
+}
+
+// 删除某个目录，如果force=true，则强制删除目录下的所有key，否则该目录下有key时不允许删除
+func (receiver *Client) DeleteDir(key string, force bool) error {
+	_, err := receiver.EtcdAPI.Delete(context.Background(), key, &etcd.DeleteOptions{Dir: true, Recursive: force})
 	return err
 }
